@@ -2,58 +2,68 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DollarSign, Receipt, AlertTriangle, TrendingUp, Download } from 'lucide-react';
+import { DollarSign, Receipt, AlertTriangle, TrendingUp, Download, LogOut } from 'lucide-react';
 import { ExpenseItem } from './ExpenseItem';
 import { TaxAlerts } from './TaxAlerts';
-
-interface Expense {
-  id: string;
-  vendor: string;
-  amount: number;
-  date: string;
-  category: string;
-  deductible: boolean;
-  deductibleAmount: number;
-  description: string;
-}
+import { DatabaseService } from '@/services/database.service';
+import { Expense } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export const Dashboard = () => {
-  const [expenses, setExpenses] = useState<Expense[]>([
-    {
-      id: '1',
-      vendor: 'Starbucks Coffee',
-      amount: 45.60,
-      date: '2024-01-20',
-      category: 'Meals & Entertainment',
-      deductible: true,
-      deductibleAmount: 22.80,
-      description: 'Business meeting with client'
-    },
-    {
-      id: '2',
-      vendor: 'Office Depot',
-      amount: 127.50,
-      date: '2024-01-19',
-      category: 'Office Supplies',
-      deductible: true,
-      deductibleAmount: 127.50,
-      description: 'Printer paper and supplies'
-    },
-    {
-      id: '3',
-      vendor: 'Gas Station',
-      amount: 65.00,
-      date: '2024-01-18',
-      category: 'Personal',
-      deductible: false,
-      deductibleAmount: 0,
-      description: 'Personal vehicle fuel'
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { signOut } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadExpenses();
+
+    // Subscribe to real-time updates
+    const unsubscribe = DatabaseService.subscribeToExpenses((updatedExpenses) => {
+      setExpenses(updatedExpenses);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const loadExpenses = async () => {
+    try {
+      setLoading(true);
+      const data = await DatabaseService.getExpenses();
+      setExpenses(data);
+    } catch (error) {
+      console.error('Error loading expenses:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error Loading Expenses',
+        description: 'Failed to load your expenses. Please try again.',
+      });
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const totalDeductible = expenses.reduce((sum, expense) => sum + expense.deductibleAmount, 0);
+  const totalDeductible = expenses.reduce((sum, expense) => sum + expense.deductible_amount, 0);
   const deductiblePercentage = totalExpenses > 0 ? (totalDeductible / totalExpenses) * 100 : 0;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading expenses...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-4 max-w-md mx-auto">
@@ -104,7 +114,7 @@ export const Dashboard = () => {
               <span className="text-red-600">Non-deductible: ${(totalExpenses - totalDeductible).toFixed(2)}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${deductiblePercentage}%` }}
               ></div>

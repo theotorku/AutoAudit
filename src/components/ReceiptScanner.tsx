@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Camera as CameraIcon, Upload, Check, Edit3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DatabaseService } from '@/services/database.service';
 
 interface ReceiptData {
   vendor: string;
@@ -43,7 +44,7 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
   const scanReceipt = async () => {
     try {
       setIsScanning(true);
-      
+
       const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -52,7 +53,7 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
       });
 
       setScannedImage(image.dataUrl || null);
-      
+
       // Simulate OCR processing (in real app, this would call an OCR service)
       setTimeout(() => {
         const mockReceiptData: ReceiptData = {
@@ -63,17 +64,17 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
           deductible: true,
           deductibleAmount: 12.25, // 50% for meals
         };
-        
+
         setReceiptData(mockReceiptData);
         setIsEditing(true);
         setIsScanning(false);
-        
+
         toast({
           title: 'Receipt Scanned Successfully',
           description: 'Review and confirm the extracted details.',
         });
       }, 2000);
-      
+
     } catch (error) {
       console.error('Error scanning receipt:', error);
       setIsScanning(false);
@@ -87,9 +88,9 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
 
   const updateReceiptData = (field: keyof ReceiptData, value: any) => {
     if (!receiptData) return;
-    
+
     const updated = { ...receiptData, [field]: value };
-    
+
     // Recalculate deductible amount when category changes
     if (field === 'category') {
       const category = taxCategories.find(cat => cat.value === value);
@@ -97,26 +98,49 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
       updated.deductible = deductiblePercent > 0;
       updated.deductibleAmount = (updated.amount * deductiblePercent) / 100;
     }
-    
+
     if (field === 'amount') {
       const category = taxCategories.find(cat => cat.value === updated.category);
       const deductiblePercent = category ? category.deductible : 0;
       updated.deductibleAmount = (value * deductiblePercent) / 100;
     }
-    
+
     setReceiptData(updated);
   };
 
-  const confirmReceipt = () => {
+  const confirmReceipt = async () => {
     if (receiptData) {
-      onReceiptProcessed(receiptData);
-      setScannedImage(null);
-      setReceiptData(null);
-      setIsEditing(false);
-      toast({
-        title: 'Expense Added',
-        description: 'Receipt has been categorized and saved.',
-      });
+      try {
+        // Save expense to Supabase
+        await DatabaseService.addExpense({
+          vendor: receiptData.vendor,
+          amount: receiptData.amount,
+          date: receiptData.date,
+          category: receiptData.category,
+          deductible: receiptData.deductible,
+          deductible_amount: receiptData.deductibleAmount,
+          description: '',
+        });
+
+        // Call the callback (though it's no longer needed with real-time updates)
+        onReceiptProcessed(receiptData);
+
+        setScannedImage(null);
+        setReceiptData(null);
+        setIsEditing(false);
+
+        toast({
+          title: 'Expense Added',
+          description: 'Receipt has been categorized and saved to your account.',
+        });
+      } catch (error) {
+        console.error('Error saving expense:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Save Failed',
+          description: 'Failed to save expense. Please try again.',
+        });
+      }
     }
   };
 
@@ -135,21 +159,21 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
               <img src={scannedImage} alt="Scanned receipt" className="w-full h-32 object-cover rounded-lg" />
             </div>
           )}
-          
+
           <div className="space-y-3">
             <div>
               <Label htmlFor="vendor">Vendor</Label>
-              <Input 
+              <Input
                 id="vendor"
                 value={receiptData.vendor}
                 onChange={(e) => updateReceiptData('vendor', e.target.value)}
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="amount">Amount</Label>
-                <Input 
+                <Input
                   id="amount"
                   type="number"
                   step="0.01"
@@ -157,10 +181,10 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
                   onChange={(e) => updateReceiptData('amount', parseFloat(e.target.value) || 0)}
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="date">Date</Label>
-                <Input 
+                <Input
                   id="date"
                   type="date"
                   value={receiptData.date}
@@ -168,7 +192,7 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
                 />
               </div>
             </div>
-            
+
             <div>
               <Label htmlFor="category">Tax Category</Label>
               <Select value={receiptData.category} onValueChange={(value) => updateReceiptData('category', value)}>
@@ -191,7 +215,7 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             {receiptData.deductible && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center gap-2 text-green-700">
@@ -199,14 +223,14 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
                   <span className="font-medium">Tax Deductible: ${receiptData.deductibleAmount.toFixed(2)}</span>
                 </div>
                 <p className="text-sm text-green-600 mt-1">
-                  {receiptData.category === 'meals-entertainment' 
-                    ? 'Business meals are 50% deductible' 
+                  {receiptData.category === 'meals-entertainment'
+                    ? 'Business meals are 50% deductible'
                     : 'Fully deductible business expense'}
                 </p>
               </div>
             )}
           </div>
-          
+
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setIsEditing(false)} className="flex-1">
               Cancel
@@ -237,10 +261,10 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
               {isScanning ? 'Processing receipt...' : 'Take a photo of your receipt to automatically extract expense details'}
             </p>
           </div>
-          
+
           <div className="space-y-2">
-            <Button 
-              onClick={scanReceipt} 
+            <Button
+              onClick={scanReceipt}
               disabled={isScanning}
               className="w-full"
               size="lg"
@@ -248,14 +272,14 @@ export const ReceiptScanner = ({ onReceiptProcessed }: ReceiptScannerProps) => {
               <CameraIcon className="h-5 w-5 mr-2" />
               {isScanning ? 'Scanning...' : 'Scan Receipt'}
             </Button>
-            
+
             <Button variant="outline" className="w-full" disabled={isScanning}>
               <Upload className="h-4 w-4 mr-2" />
               Upload from Gallery
             </Button>
           </div>
         </div>
-        
+
         <div className="text-xs text-muted-foreground space-y-1">
           <p>• Automatically extracts vendor, amount, and date</p>
           <p>• Categorizes expenses for IRS compliance</p>

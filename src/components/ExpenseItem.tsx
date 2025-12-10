@@ -1,17 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Check, X, Calendar, Building2 } from 'lucide-react';
-
-interface Expense {
-  id: string;
-  vendor: string;
-  amount: number;
-  date: string;
-  category: string;
-  deductible: boolean;
-  deductibleAmount: number;
-  description: string;
-}
+import { Expense } from '@/lib/supabase';
 
 interface ExpenseItemProps {
   expense: Expense;
@@ -19,9 +9,9 @@ interface ExpenseItemProps {
 
 export const ExpenseItem = ({ expense }: ExpenseItemProps) => {
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
     });
   };
 
@@ -35,7 +25,7 @@ export const ExpenseItem = ({ expense }: ExpenseItemProps) => {
             <Building2 className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium text-sm">{expense.vendor}</span>
           </div>
-          
+
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="h-3 w-3 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">{formatDate(expense.date)}</span>
@@ -44,7 +34,7 @@ export const ExpenseItem = ({ expense }: ExpenseItemProps) => {
           <Badge variant="secondary" className="text-xs mb-1">
             {expense.category}
           </Badge>
-          
+
           {expense.deductible && expense.category === 'Meals & Entertainment' && (
             <p className="text-xs text-muted-foreground">50% deductible for business meals</p>
           )}
@@ -52,11 +42,11 @@ export const ExpenseItem = ({ expense }: ExpenseItemProps) => {
 
         <div className="text-right">
           <div className="font-bold text-sm">${expense.amount.toFixed(2)}</div>
-          
+
           {expense.deductible ? (
             <div className="flex items-center gap-1 text-green-600">
               <Check className="h-3 w-3" />
-              <span className="text-xs">${expense.deductibleAmount.toFixed(2)} deductible</span>
+              <span className="text-xs">${expense.deductible_amount.toFixed(2)} deductible</span>
             </div>
           ) : (
             <div className="flex items-center gap-1 text-red-600">

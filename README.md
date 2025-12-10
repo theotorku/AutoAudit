@@ -1,71 +1,164 @@
-## Project info
+# AutoAudit
 
-**URL**: https://lovable.dev/projects/26767fe7-a3c9-4fb3-9f60-95d27f5f1dc6
+**Tax-Smart Expense Tracking for Self-Employed Professionals**
 
-## How can I edit this code?
+AutoAudit is a mobile-first expense tracking application that helps freelancers, contractors, and small business owners maximize their tax deductions by automatically categorizing expenses and calculating deductible amounts.
 
-There are several ways of editing your application.
+## ✨ Features
 
-**Use Lovable**
+### 🔐 Authentication & Security
+- Secure email/password authentication via Supabase
+- Row-level security ensuring users only see their own data
+- Protected routes and session management
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/26767fe7-a3c9-4fb3-9f60-95d27f5f1dc6) and start prompting.
+### 📊 Expense Management
+- Real-time expense tracking with cloud sync
+- Automatic deductible amount calculation
+- Category-based organization (Office Supplies, Meals & Entertainment, Travel, etc.)
+- Live updates across devices
 
-Changes made via Lovable will be committed automatically to this repo.
+### 📸 Receipt Scanning
+- Camera integration via Capacitor
+- OCR text extraction (coming soon with Tesseract.js)
+- Receipt image storage in Supabase Storage
 
-**Use your preferred IDE**
+### 📈 Tax Insights
+- Deductible vs. non-deductible expense breakdown
+- Real-time tax savings overview
+- IRS-compliant categorization
+- Tax rule updates and alerts
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 📱 Mobile-Ready
+- Built with Capacitor for iOS and Android
+- Responsive design optimized for mobile
+- Offline-capable (coming soon)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🛠️ Tech Stack
 
-Follow these steps:
+**Frontend:**
+- React 18 with TypeScript
+- Vite for blazing-fast builds
+- Tailwind CSS for styling
+- shadcn/ui component library
+- React Router for navigation
+- Lucide React for icons
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+**Backend:**
+- Supabase (PostgreSQL database)
+- Supabase Auth for authentication
+- Supabase Storage for receipt images
+- Row Level Security (RLS) policies
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+**Mobile:**
+- Capacitor for iOS/Android deployment
+- Camera API for receipt scanning
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🚀 Getting Started
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Prerequisites
+- Node.js 18+ and npm
+- A Supabase account (free tier works)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd AutoAudit
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up Supabase**
+   
+   Follow the detailed [Supabase Setup Guide](./supabase_setup_guide.md) to:
+   - Create a Supabase project
+   - Run the database schema
+   - Configure environment variables
+
+4. **Create environment file**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Then edit `.env` and add your Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+5. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+6. **Open in browser**
+   
+   Navigate to `http://localhost:5173`
+
+## 📱 Mobile Development
+
+### Build for Android/iOS
+
+```bash
+npm run build
+npx cap sync
+npx cap open android  # or ios
 ```
 
-**Edit a file directly in GitHub**
+## 🗂️ Project Structure
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+AutoAudit/
+├── src/
+│   ├── components/        # React components
+│   │   ├── Dashboard.tsx
+│   │   ├── ReceiptScanner.tsx
+│   │   ├── TaxAlerts.tsx
+│   │   └── ui/           # shadcn/ui components
+│   ├── contexts/         # React contexts
+│   │   └── AuthContext.tsx
+│   ├── services/         # Business logic
+│   │   └── database.service.ts
+│   ├── lib/             # Utilities
+│   │   └── supabase.ts  # Supabase client
+│   ├── pages/           # Route pages
+│   │   ├── index.tsx
+│   │   ├── Login.tsx
+│   │   └── NotFound.tsx
+│   └── App.tsx          # Root component
+├── supabase-schema.sql  # Database schema
+└── .env.example         # Environment template
+```
 
-**Use GitHub Codespaces**
+## 🔒 Security
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- All data is protected by Supabase Row Level Security (RLS)
+- Users can only access their own expenses
+- Authentication tokens stored securely
+- Receipt images stored in private buckets
 
-## What technologies are used for this project?
+## 🚧 Roadmap
+
+- [x] Supabase authentication
+- [x] Real-time expense tracking
+- [x] Database integration with RLS
+- [ ] Real OCR with Tesseract.js
+- [ ] CSV/PDF export functionality
+- [ ] Settings page (category management)
+- [ ] Reports page (date filtering, charts)
+- [ ] Offline support
+- [ ] Multi-currency support
+
+## 📄 License
 
 This project is built with:
-
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/26767fe7-a3c9-4fb3-9f60-95d27f5f1dc6) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- Supabase
